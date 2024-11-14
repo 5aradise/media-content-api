@@ -19,6 +19,5 @@ bin/
 go.work
 go.work.sum
 
-# Custom
+# Environment
 .env
-*.db
