@@ -28,7 +28,6 @@ import (
 // @contact.email rozumovskyi.daniil@lll.kpi.ua
 
 // @host localhost:8080
-// @BasePath /
 func main() {
 	// Load config
 	err := config.Load()
@@ -52,11 +51,11 @@ func main() {
 	r.HandleFunc("POST /users", us.CreateUser)
 	r.HandleFunc("GET /users", us.ListUsers)
 	r.HandleFunc("GET /users/{id}", us.GetUser)
-	r.HandleFunc("PATCH /users/{id}", us.UpdateUser)
+	r.HandleFunc("PUT /users/{id}", us.UpdateUser)
 	r.HandleFunc("DELETE /users/{id}", us.DeleteUser)
 
-	r.HandleFunc("GET /swagger/", swagger.Handler(
-		swagger.URL(fmt.Sprintf("http://localhost:%s/swagger/doc.json", config.Cfg.Server.Port)),
+	r.HandleFunc("GET /api/", swagger.Handler(
+		swagger.URL(fmt.Sprintf("http://localhost:%s/api/doc.json", config.Cfg.Server.Port)),
 	))
 
 	// Run server

@@ -2,8 +2,10 @@ package database
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/5aradise/media-content-api/src/internal/types"
+	"github.com/lib/pq"
 )
 
 func userToTypes(dbUser User) types.User {
@@ -37,7 +39,17 @@ func Create(db DBTX) *DB {
 	return &DB{New(db)}
 }
 
-func (db DB) CreateUser(ctx context.Context, firstName, lastName, email string, hashedPassword [60]byte) (types.User, error) {
+func (db DB) CreateUser(ctx context.Context, firstName, lastName, email string, hashedPassword [types.PasswordMaxLen]byte) (types.User, error) {
+	if len(firstName) > types.NameMaxLen {
+		return types.User{}, types.ErrNameTooLong
+	}
+	if len(lastName) > types.NameMaxLen {
+		return types.User{}, types.ErrNameTooLong
+	}
+	if len(email) > types.EmailMaxLen {
+		return types.User{}, types.ErrEmailTooLong
+	}
+
 	u, err := db.q.CreateUser(ctx, CreateUserParams{
 		FirstName: firstName,
 		LastName:  lastName,
@@ -45,6 +57,11 @@ func (db DB) CreateUser(ctx context.Context, firstName, lastName, email string, 
 		Password:  string(hashedPassword[:]),
 	})
 	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code.Name() == "unique_violation" {
+				return types.User{}, types.ErrUserEmailExists
+			}
+		}
 		return types.User{}, err
 	}
 	return userToTypes(u), nil
@@ -65,12 +82,25 @@ func (db DB) ListUsers(ctx context.Context) ([]types.User, error) {
 func (db DB) GetUserById(ctx context.Context, id int32) (types.User, error) {
 	u, err := db.q.GetUserById(ctx, id)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return types.User{}, types.ErrUserIdNotExists
+		}
 		return types.User{}, err
 	}
 	return userToTypes(u), nil
 }
 
 func (db DB) UpdateUserById(ctx context.Context, id int32, firstName, lastName, email string, hashedPassword [60]byte) (types.User, error) {
+	if len(firstName) > types.NameMaxLen {
+		return types.User{}, types.ErrNameTooLong
+	}
+	if len(lastName) > types.NameMaxLen {
+		return types.User{}, types.ErrNameTooLong
+	}
+	if len(email) > types.EmailMaxLen {
+		return types.User{}, types.ErrEmailTooLong
+	}
+
 	u, err := db.q.UpdateUserById(ctx, UpdateUserByIdParams{
 		ID:        id,
 		FirstName: firstName,
@@ -79,6 +109,14 @@ func (db DB) UpdateUserById(ctx context.Context, id int32, firstName, lastName, 
 		Password:  string(hashedPassword[:]),
 	})
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return types.User{}, types.ErrUserIdNotExists
+		}
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code.Name() == "unique_violation" {
+				return types.User{}, types.ErrUserEmailExists
+			}
+		}
 		return types.User{}, err
 	}
 	return userToTypes(u), nil

@@ -10,8 +10,10 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (first_name, last_name, email, password)
-VALUES ($1, $2, $3, $4)
+INSERT INTO users 
+    (first_name, last_name, email, password)
+VALUES 
+    ($1, $2, $3, $4)
 RETURNING id, first_name, last_name, email, password
 `
 
@@ -51,7 +53,8 @@ func (q *Queries) DeleteUserById(ctx context.Context, id int32) error {
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT id, first_name, last_name, email, password FROM users
+SELECT id, first_name, last_name, email, password 
+FROM users
 WHERE id = $1
 `
 
@@ -69,7 +72,8 @@ func (q *Queries) GetUserById(ctx context.Context, id int32) (User, error) {
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, first_name, last_name, email, password FROM users
+SELECT id, first_name, last_name, email, password 
+FROM users
 ORDER BY id
 `
 
@@ -104,29 +108,31 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 
 const updateUserById = `-- name: UpdateUserById :one
 UPDATE users
-SET first_name = $1,
-    last_name = $2,
-    email = $3,
-    password = $4
-WHERE id = $5
+SET 
+    first_name = $2,
+    last_name = $3,
+    email = $4,
+    password = $5
+WHERE 
+    id = $1
 RETURNING id, first_name, last_name, email, password
 `
 
 type UpdateUserByIdParams struct {
+	ID        int32
 	FirstName string
 	LastName  string
 	Email     string
 	Password  string
-	ID        int32
 }
 
 func (q *Queries) UpdateUserById(ctx context.Context, arg UpdateUserByIdParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, updateUserById,
+		arg.ID,
 		arg.FirstName,
 		arg.LastName,
 		arg.Email,
 		arg.Password,
-		arg.ID,
 	)
 	var i User
 	err := row.Scan(
