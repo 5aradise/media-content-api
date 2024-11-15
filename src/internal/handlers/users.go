@@ -3,10 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
-	"fmt"
-	"math"
 	"net/http"
-	"strconv"
 
 	"github.com/5aradise/media-content-api/src/internal/types"
 	"github.com/5aradise/media-content-api/src/pkg/api"
@@ -140,7 +137,12 @@ func (s UserService) ListUsers(w http.ResponseWriter, r *http.Request) {
 // @Failure      500  {object}  api.ErrorResponse
 // @Router       /users/{id} [get]
 func (s UserService) GetUser(w http.ResponseWriter, r *http.Request) {
-	id, err := getIdPathValue(r)
+	idS := r.PathValue("id")
+	if idS == "" {
+		panic("empty id path value")
+	}
+
+	id, err := getId(idS)
 	if err != nil {
 		api.WriteErrorf(w, http.StatusBadRequest, err.Error())
 		return
@@ -178,7 +180,12 @@ type UpdateUserRequest struct {
 // @Failure      500  {object}  api.ErrorResponse
 // @Router       /users/{id} [put]
 func (s UserService) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	id, err := getIdPathValue(r)
+	idS := r.PathValue("id")
+	if idS == "" {
+		panic("empty id path value")
+	}
+
+	id, err := getId(idS)
 	if err != nil {
 		api.WriteErrorf(w, http.StatusBadRequest, err.Error())
 		return
@@ -275,7 +282,12 @@ func (s UserService) UpdateUser(w http.ResponseWriter, r *http.Request) {
 // @Failure      500  {object}  api.ErrorResponse
 // @Router       /users/{id} [delete]
 func (s UserService) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	id, err := getIdPathValue(r)
+	idS := r.PathValue("id")
+	if idS == "" {
+		panic("empty id path value")
+	}
+
+	id, err := getId(idS)
 	if err != nil {
 		api.WriteErrorf(w, http.StatusBadRequest, err.Error())
 		return
@@ -283,27 +295,13 @@ func (s UserService) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	err = s.db.DeleteUserById(r.Context(), id)
 	if err != nil {
+		if errors.Is(err, types.ErrUserFKConstraint) {
+			api.WriteErrorf(w, http.StatusBadRequest, "cannot delete user because of existing media content associated with it")
+			return
+		}
 		api.WriteErrorf(w, http.StatusInternalServerError, "DeleteUser: %v", err)
 		return
 	}
 
 	api.WriteNoContent(w)
-}
-
-func getIdPathValue(r *http.Request) (int32, error) {
-	idS := r.PathValue("id")
-	if idS == "" {
-		panic("empty id path value")
-	}
-
-	id, err := strconv.Atoi(idS)
-	if err != nil {
-		return 0, errors.New("invalid number")
-	}
-
-	if id > math.MaxInt32 {
-		return 0, fmt.Errorf("id cannot be greater than %d", math.MaxInt32)
-	}
-
-	return int32(id), nil
 }

@@ -4,6 +4,19 @@ definitions:
       error:
         type: string
     type: object
+  handlers.CreateMediaContentRequest:
+    properties:
+      body:
+        type: string
+      description:
+        type: string
+      title:
+        type: string
+      type:
+        $ref: '#/definitions/types.MediaContentType'
+      user_id:
+        type: integer
+    type: object
   handlers.CreateUserRequest:
     properties:
       email:
@@ -15,6 +28,13 @@ definitions:
       password:
         type: string
     type: object
+  handlers.ListMediaContentResponse:
+    properties:
+      media_content:
+        items:
+          $ref: '#/definitions/types.MediaContent'
+        type: array
+    type: object
   handlers.ListUsersResponse:
     properties:
       users:
@@ -22,6 +42,35 @@ definitions:
           $ref: '#/definitions/types.User'
         type: array
     type: object
+  types.MediaContent:
+    properties:
+      body:
+        type: string
+      content_type:
+        $ref: '#/definitions/types.MediaContentType'
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  types.MediaContentType:
+    enum:
+    - text
+    - image
+    - audio
+    - video
+    type: string
+    x-enum-varnames:
+    - Text
+    - Image
+    - Audio
+    - Video
   types.User:
     properties:
       email:
@@ -45,6 +94,114 @@ info:
   title: Media content analysis system
   version: "1.0"
 paths:
+  /media_content:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: query
+        name: user_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ListMediaContentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: List media content
+      tags:
+      - media_content
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Media content info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateMediaContentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/types.MediaContent'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Create media content
+      tags:
+      - media_content
+  /media_content/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Media content ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Delete media content by id
+      tags:
+      - media_content
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Media content ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.MediaContent'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get media content by id
+      tags:
+      - media_content
   /users:
     get:
       consumes:

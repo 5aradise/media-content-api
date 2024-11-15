@@ -54,6 +54,12 @@ func main() {
 	r.HandleFunc("PUT /users/{id}", us.UpdateUser)
 	r.HandleFunc("DELETE /users/{id}", us.DeleteUser)
 
+	mcs := handlers.NewMediaContentService(db)
+	r.HandleFunc("POST /media_content", mcs.CreateMediaContent)
+	r.HandleFunc("GET /media_content", mcs.ListMediaContent)
+	r.HandleFunc("GET /media_content/{id}", mcs.GetMediaContent)
+	r.HandleFunc("DELETE /media_content/{id}", mcs.DeleteMediaContent)
+
 	r.HandleFunc("GET /api/", swagger.Handler(
 		swagger.URL(fmt.Sprintf("http://localhost:%s/api/doc.json", config.Cfg.Server.Port)),
 	))

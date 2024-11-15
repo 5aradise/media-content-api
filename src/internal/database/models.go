@@ -4,6 +4,21 @@
 
 package database
 
+import (
+	"database/sql"
+	"time"
+)
+
+type MediaContent struct {
+	ID          int32
+	Title       string
+	Description sql.NullString
+	Body        string
+	ContentType string
+	CreatedAt   time.Time
+	UserID      int32
+}
+
 type User struct {
 	ID        int32
 	FirstName string

@@ -19,6 +19,172 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/media_content": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "media_content"
+                ],
+                "summary": "List media content",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ListMediaContentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "media_content"
+                ],
+                "summary": "Create media content",
+                "parameters": [
+                    {
+                        "description": "Media content info",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.CreateMediaContentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/types.MediaContent"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/media_content/{id}": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "media_content"
+                ],
+                "summary": "Get media content by id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Media content ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.MediaContent"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "media_content"
+                ],
+                "summary": "Delete media content by id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Media content ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users": {
             "get": {
                 "consumes": [
@@ -231,6 +397,26 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.CreateMediaContentRequest": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/types.MediaContentType"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "handlers.CreateUserRequest": {
             "type": "object",
             "properties": {
@@ -248,6 +434,17 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.ListMediaContentResponse": {
+            "type": "object",
+            "properties": {
+                "media_content": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.MediaContent"
+                    }
+                }
+            }
+        },
         "handlers.ListUsersResponse": {
             "type": "object",
             "properties": {
@@ -258,6 +455,47 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "types.MediaContent": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "content_type": {
+                    "$ref": "#/definitions/types.MediaContentType"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "types.MediaContentType": {
+            "type": "string",
+            "enum": [
+                "text",
+                "image",
+                "audio",
+                "video"
+            ],
+            "x-enum-varnames": [
+                "Text",
+                "Image",
+                "Audio",
+                "Video"
+            ]
         },
         "types.User": {
             "type": "object",
