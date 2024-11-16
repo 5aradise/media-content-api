@@ -1,6 +1,5 @@
 # Реалізація інформаційного та програмного забезпечення
 
-
 ## SQL-скрипт для створення початкового наповнення бази даних
 
 ```sql
@@ -356,7 +355,7 @@ USE media_system
 START TRANSACTION;
 
 -- User table
-INSERT INTO User (id, first_name, last_name, email, password) VALUES 
+INSERT INTO User (id, first_name, last_name, email, password) VALUES
 (1, 'Vladyslav', 'Sokolov', 'pppvladsok@gmail.com', 'vlada1976'),
 (2, 'John', 'Doe', 'john.doe2000@gmail.com', '756433456'),
 (3, 'Veronica', 'Shevchenko', 'lapamapa@ukr.net', 'geog21224'),
@@ -431,7 +430,7 @@ INSERT INTO MediaContent (`id`, `title`, `description`, `body`, `content_type`, 
 (10, 'Innovations in Healthcare', 'New technologies improving patient care.', 'Healthcare innovations like telemedicine and personalized treatments are revolutionizing patient care, enhancing accessibility, and improving outcomes for various medical conditions.', 'Article', '2024-12-10', 10);
 
 -- AnalysisReport table
-INSERT INTO AnalysisReport (`id`, `title`, `body`, `created_at`, `user_id`) VALUES 
+INSERT INTO AnalysisReport (`id`, `title`, `body`, `created_at`, `user_id`) VALUES
 (1, 'Quarterly Performance Analysis', 'In-depth analysis of quarterly performance.', '2024-01-01', 1),
 (2, 'Market Trend Report', 'Overview of market trends for the current quarter.', '2024-01-02', 2),
 (3, 'Customer Feedback Summary', 'Compilation of recent customer feedback.', '2024-01-03', 1),
@@ -457,7 +456,7 @@ INSERT INTO RolePermission (role_id, permission_id) VALUES
 (2, 6);
 
 -- UserRole table
-INSERT INTO `UserRole` (`user_id`, `role_id`) VALUES 
+INSERT INTO `UserRole` (`user_id`, `role_id`) VALUES
 (1, 1), (1, 2),
 (2, 2),
 (3, 1), (3, 2),
@@ -518,41 +517,41 @@ INSERT INTO MediaContentSource (source_id, mediaContent_id) VALUES
 
 -- AnalysisResultTag table
 INSERT INTO AnalysisResultTag (`analysisResult_id`, `tag_id`) VALUES
-(1, 1), 
+(1, 1),
 (1, 11),
 (2, 5),
-(2, 11), 
-(3, 12), 
-(4, 13), 
-(5, 14), 
-(6, 3), 
-(6, 15), 
-(7, 16), 
-(8, 17), 
-(9, 18), 
-(10, 2), 
+(2, 11),
+(3, 12),
+(4, 13),
+(5, 14),
+(6, 3),
+(6, 15),
+(7, 16),
+(8, 17),
+(9, 18),
+(10, 2),
 (10, 19);
 
 -- AnalysisReportTag table
-INSERT INTO AnalysisReportTag (analysisReport_id, tag_id) VALUES 
-(1, 2),  
-(2, 2),  
-(3, 3),  
-(4, 2), 
-(5, 8),  
-(6, 3),  
-(7, 2),  
-(8, 1), 
-(9, 8),  
+INSERT INTO AnalysisReportTag (analysisReport_id, tag_id) VALUES
+(1, 2),
+(2, 2),
+(3, 3),
+(4, 2),
+(5, 8),
+(6, 3),
+(7, 2),
+(8, 1),
+(9, 8),
 (10, 2);
 
 -- MediaContentTag table
-INSERT INTO MediaContentTag (tag_id, mediaContent_id) VALUES 
-(1, 1), 
+INSERT INTO MediaContentTag (tag_id, mediaContent_id) VALUES
+(1, 1),
 (1, 2),
 (1, 3),
 (1, 5),
-(1, 7), 
+(1, 7),
 (1, 10),
 (2, 2),
 (2, 3),
@@ -574,8 +573,8 @@ INSERT INTO MediaContentTag (tag_id, mediaContent_id) VALUES
 (10, 10);
 
 -- SourceTag table
-INSERT INTO SourceTag (tag_id, source_id) VALUES 
-(1, 1), 
+INSERT INTO SourceTag (tag_id, source_id) VALUES
+(1, 1),
 (1, 3),
 (1, 4),
 (1, 10),
@@ -604,6 +603,871 @@ COMMIT;
 
 ```
 
-
 ## RESTfull сервіс для управління даними
 
+### Схема бази даних (goose migration)
+
+sql/schema/001_users.sql
+
+```sql
+-- +goose Up
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    first_name VARCHAR(45) NOT NULL,
+    last_name VARCHAR(45) NOT NULL,
+    email VARCHAR(45) UNIQUE NOT NULL,
+    password CHAR(60) NOT NULL
+);
+
+-- +goose Down
+DROP TABLE users;
+```
+
+sql/schema/002_media_content.sql
+
+```sql
+-- +goose Up
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    first_name VARCHAR(45) NOT NULL,
+    last_name VARCHAR(45) NOT NULL,
+    email VARCHAR(45) UNIQUE NOT NULL,
+    password CHAR(60) NOT NULL
+);
+
+-- +goose Down
+DROP TABLE users;
+```
+
+### Запити до бази даних (sqlc queries)
+
+sql/queries/users.sql
+
+```sql
+-- name: CreateUser :one
+INSERT INTO users
+    (first_name, last_name, email, password)
+VALUES
+    ($1, $2, $3, $4)
+RETURNING *;
+
+-- name: ListUsers :many
+SELECT *
+FROM users
+ORDER BY id;
+
+-- name: GetUserById :one
+SELECT *
+FROM users
+WHERE id = $1;
+
+-- name: UpdateUserById :one
+UPDATE users
+SET
+    first_name = $2,
+    last_name = $3,
+    email = $4,
+    password = $5
+WHERE
+    id = $1
+RETURNING *;
+
+-- name: DeleteUserById :exec
+DELETE FROM users
+WHERE id = $1;
+```
+
+sql/queries/media_content.sql
+
+```sql
+-- name: CreateMediaContent :one
+INSERT INTO media_content
+    (title, description, body, content_type, created_at, user_id)
+VALUES
+    ($1, $2, $3, $4, NOW(), $5)
+RETURNING *;
+
+-- name: ListMediaContent :many
+SELECT *
+FROM media_content
+ORDER BY id;
+
+-- name: GetMediaContentById :one
+SELECT *
+FROM media_content
+WHERE id = $1;
+
+-- name: ListMediaContentByUserId :many
+SELECT *
+FROM media_content
+WHERE user_id = $1
+ORDER BY id;
+
+-- name: DeleteMediaContentById :exec
+DELETE FROM media_content
+WHERE id = $1;
+```
+
+### Згенеровані моделі
+
+internal/database/models.go
+
+```go
+type MediaContent struct {
+	ID          int32
+	Title       string
+	Description sql.NullString
+	Body        string
+	ContentType string
+	CreatedAt   time.Time
+	UserID      int32
+}
+
+type User struct {
+	ID        int32
+	FirstName string
+	LastName  string
+	Email     string
+	Password  string
+}
+```
+
+### Адаптер для взаємодії з базою даних користувача
+
+internal/database/adapter.go
+
+```go
+func (db DB) CreateUser(ctx context.Context, firstName, lastName, email string, hashedPassword [types.PasswordMaxLen]byte) (types.User, error) {
+	if len(firstName) > types.NameMaxLen {
+		return types.User{}, types.ErrNameTooLong
+	}
+	if len(lastName) > types.NameMaxLen {
+		return types.User{}, types.ErrNameTooLong
+	}
+	if len(email) > types.EmailMaxLen {
+		return types.User{}, types.ErrEmailTooLong
+	}
+
+	u, err := db.q.CreateUser(ctx, CreateUserParams{
+		FirstName: firstName,
+		LastName:  lastName,
+		Email:     email,
+		Password:  string(hashedPassword[:]),
+	})
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code.Name() == "unique_violation" {
+				return types.User{}, types.ErrUserEmailExists
+			}
+		}
+		return types.User{}, err
+	}
+	return userToTypes(u), nil
+}
+
+func (db DB) ListUsers(ctx context.Context) ([]types.User, error) {
+	dbUsers, err := db.q.ListUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	users := make([]types.User, len(dbUsers))
+	for i, dbUser := range dbUsers {
+		users[i] = userToTypes(dbUser)
+	}
+	return users, nil
+}
+
+func (db DB) GetUserById(ctx context.Context, id int32) (types.User, error) {
+	u, err := db.q.GetUserById(ctx, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return types.User{}, types.ErrUserIdNotExists
+		}
+		return types.User{}, err
+	}
+	return userToTypes(u), nil
+}
+
+func (db DB) UpdateUserById(ctx context.Context, id int32, firstName, lastName, email string, hashedPassword [60]byte) (types.User, error) {
+	if len(firstName) > types.NameMaxLen {
+		return types.User{}, types.ErrNameTooLong
+	}
+	if len(lastName) > types.NameMaxLen {
+		return types.User{}, types.ErrNameTooLong
+	}
+	if len(email) > types.EmailMaxLen {
+		return types.User{}, types.ErrEmailTooLong
+	}
+
+	u, err := db.q.UpdateUserById(ctx, UpdateUserByIdParams{
+		ID:        id,
+		FirstName: firstName,
+		LastName:  lastName,
+		Email:     email,
+		Password:  string(hashedPassword[:]),
+	})
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return types.User{}, types.ErrUserIdNotExists
+		}
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code.Name() == "unique_violation" {
+				return types.User{}, types.ErrUserEmailExists
+			}
+		}
+		return types.User{}, err
+	}
+	return userToTypes(u), nil
+}
+
+func (db DB) DeleteUserById(ctx context.Context, id int32) error {
+	err := db.q.DeleteUserById(ctx, id)
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code.Name() == "foreign_key_violation" {
+				return types.ErrUserFKConstraint
+			}
+		}
+	}
+	return err
+}
+```
+
+### Адаптер для взаємодії з базою даних медіа-контенту
+
+internal/database/adapter.go
+
+```go
+func (db DB) CreateMediaContent(
+	ctx context.Context, title string, description sql.NullString, body string, mcType types.MediaContentType, userId int32,
+) (types.MediaContent, error) {
+	if len(title) > types.TitleMaxLen {
+		return types.MediaContent{}, types.ErrTitleTooLong
+	}
+	if description.Valid {
+		if len(description.String) > types.DescriptionMaxLen {
+			return types.MediaContent{}, types.ErrDescriptionTooLong
+		}
+	}
+
+	mc, err := db.q.CreateMediaContent(ctx, CreateMediaContentParams{
+		Title:       title,
+		Description: description,
+		Body:        body,
+		ContentType: mcType.String(),
+		UserID:      userId,
+	})
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code.Name() == "foreign_key_violation" {
+				return types.MediaContent{}, types.ErrUserIdNotExists
+			}
+		}
+		return types.MediaContent{}, err
+	}
+	return mediaContentToTypes(mc), nil
+}
+
+func (db DB) ListMediaContent(ctx context.Context) ([]types.MediaContent, error) {
+	dbMediaContent, err := db.q.ListMediaContent(ctx)
+	if err != nil {
+		return nil, err
+	}
+	mediaContent := make([]types.MediaContent, len(dbMediaContent))
+	for i, dbMediaContent := range dbMediaContent {
+		mediaContent[i] = mediaContentToTypes(dbMediaContent)
+	}
+	return mediaContent, nil
+}
+
+func (db DB) ListMediaContentByUserId(ctx context.Context, userID int32) ([]types.MediaContent, error) {
+	dbMediaContent, err := db.q.ListMediaContentByUserId(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	mediaContent := make([]types.MediaContent, len(dbMediaContent))
+	for i, dbMediaContent := range dbMediaContent {
+		mediaContent[i] = mediaContentToTypes(dbMediaContent)
+	}
+	return mediaContent, nil
+}
+
+func (db DB) GetMediaContentById(ctx context.Context, id int32) (types.MediaContent, error) {
+	mc, err := db.q.GetMediaContentById(ctx, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return types.MediaContent{}, types.ErrMediaContentIdNotExists
+		}
+		return types.MediaContent{}, err
+	}
+	return mediaContentToTypes(mc), nil
+}
+
+func (db DB) DeleteMediaContentById(ctx context.Context, id int32) error {
+	return db.q.DeleteMediaContentById(ctx, id)
+}
+```
+
+### Обробники запитів для взаємодії з адаптером користувача
+
+internal/handlers/users.go
+
+```go
+type UserStorage interface {
+	CreateUser(ctx context.Context, firstName, lastName, email string, hashedPassword [60]byte) (types.User, error)
+	ListUsers(ctx context.Context) ([]types.User, error)
+	GetUserById(ctx context.Context, id int32) (types.User, error)
+	UpdateUserById(ctx context.Context, id int32, firstName, lastName, email string, hashedPassword [60]byte) (types.User, error)
+	DeleteUserById(ctx context.Context, id int32) error
+}
+
+type UserService struct {
+	db UserStorage
+}
+
+func NewUserService(db UserStorage) *UserService {
+	return &UserService{
+		db: db,
+	}
+}
+
+
+type CreateUserRequest struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+}
+
+func (s UserService) CreateUser(w http.ResponseWriter, r *http.Request) {
+	var req CreateUserRequest
+	if err := api.DecodeJSON(r, &req); err != nil {
+		api.WriteErrorf(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if req.Email == "" {
+		api.WriteErrorf(w, http.StatusBadRequest, "empty email")
+		return
+	}
+	if req.FirstName == "" {
+		api.WriteErrorf(w, http.StatusBadRequest, "empty first name")
+		return
+	}
+	if req.LastName == "" {
+		api.WriteErrorf(w, http.StatusBadRequest, "empty last name")
+		return
+	}
+	if req.Password == "" {
+		api.WriteErrorf(w, http.StatusBadRequest, "empty password")
+		return
+	}
+	if !valid.Email(req.Email) {
+		api.WriteErrorf(w, http.StatusBadRequest, "invalid email")
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		if errors.Is(err, bcrypt.ErrPasswordTooLong) {
+			api.WriteErrorf(w, http.StatusBadRequest, "password length exceeds 72 characters")
+			return
+		}
+
+		api.WriteErrorf(w, http.StatusInternalServerError, "CreateUser: %v", err)
+		return
+	}
+
+	user, err := s.db.CreateUser(r.Context(), req.FirstName, req.LastName, req.Email, [60]byte(hashedPassword))
+	if err != nil {
+		if errors.Is(err, types.ErrNameTooLong) {
+			api.WriteErrorf(w, http.StatusBadRequest, "first or last name cannot be longer than %d characters", types.NameMaxLen)
+			return
+		}
+		if errors.Is(err, types.ErrEmailTooLong) {
+			api.WriteErrorf(w, http.StatusBadRequest, "email cannot be longer than %d characters", types.EmailMaxLen)
+			return
+		}
+		if errors.Is(err, types.ErrUserEmailExists) {
+			api.WriteErrorf(w, http.StatusBadRequest, "user with this email already exists")
+			return
+		}
+
+		api.WriteErrorf(w, http.StatusInternalServerError, "CreateUser: %v", err)
+		return
+	}
+
+	api.WriteJSON(w, http.StatusCreated, user)
+}
+
+
+type ListUsersResponse struct {
+	Users []types.User `json:"users"`
+}
+
+func (s UserService) ListUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := s.db.ListUsers(r.Context())
+	if err != nil {
+		api.WriteErrorf(w, http.StatusInternalServerError, "ListUsers: %v", err)
+		return
+	}
+
+	api.WriteJSON(w, http.StatusOK, ListUsersResponse{users})
+}
+
+func (s UserService) GetUser(w http.ResponseWriter, r *http.Request) {
+	idS := r.PathValue("id")
+	if idS == "" {
+		panic("empty id path value")
+	}
+
+	id, err := getId(idS)
+	if err != nil {
+		api.WriteErrorf(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	user, err := s.db.GetUserById(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, types.ErrUserIdNotExists) {
+			api.WriteErrorf(w, http.StatusNotFound, "user with this id was not found")
+			return
+		}
+
+		api.WriteErrorf(w, http.StatusInternalServerError, "GetUser: %v", err)
+		return
+	}
+
+	api.WriteJSON(w, http.StatusOK, user)
+}
+
+
+type UpdateUserRequest struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+}
+
+func (s UserService) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	idS := r.PathValue("id")
+	if idS == "" {
+		panic("empty id path value")
+	}
+
+	id, err := getId(idS)
+	if err != nil {
+		api.WriteErrorf(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	dbResCh := make(chan struct {
+		user types.User
+		err  error
+	}, 1)
+	go func() {
+		newUser, err := s.db.GetUserById(r.Context(), id)
+		dbResCh <- struct {
+			user types.User
+			err  error
+		}{newUser, err}
+	}()
+
+	var req UpdateUserRequest
+	if err := api.DecodeJSON(r, &req); err != nil {
+		api.WriteErrorf(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	dbRes := <-dbResCh
+	newUser := dbRes.user
+	err = dbRes.err
+	if err != nil {
+		if errors.Is(err, types.ErrUserIdNotExists) {
+			api.WriteErrorf(w, http.StatusNotFound, "user with this id was not found")
+			return
+		}
+		api.WriteErrorf(w, http.StatusInternalServerError, "UpdateUser: %v", err)
+		return
+	}
+
+	if req.Email != "" {
+		if !valid.Email(req.Email) {
+			api.WriteErrorf(w, http.StatusBadRequest, "invalid email")
+			return
+		}
+		newUser.Email = req.Email
+	}
+	if req.FirstName != "" {
+		newUser.FirstName = req.FirstName
+	}
+	if req.LastName != "" {
+		newUser.LastName = req.LastName
+	}
+	newPassword := [60]byte([]byte(newUser.Password))
+	if req.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			if errors.Is(err, bcrypt.ErrPasswordTooLong) {
+				api.WriteErrorf(w, http.StatusBadRequest, "password length exceeds 72 bytes")
+				return
+			}
+
+			api.WriteErrorf(w, http.StatusInternalServerError, "UpdateUser: %v", err)
+			return
+		}
+
+		newPassword = [60]byte(hashedPassword)
+	}
+
+	user, err := s.db.UpdateUserById(r.Context(), int32(id), newUser.FirstName, newUser.LastName, newUser.Email, newPassword)
+	if err != nil {
+		if errors.Is(err, types.ErrNameTooLong) {
+			api.WriteErrorf(w, http.StatusBadRequest, "first or last name cannot be longer than %d characters", types.NameMaxLen)
+			return
+		}
+		if errors.Is(err, types.ErrEmailTooLong) {
+			api.WriteErrorf(w, http.StatusBadRequest, "email cannot be longer than %d characters", types.EmailMaxLen)
+			return
+		}
+		if errors.Is(err, types.ErrUserEmailExists) {
+			api.WriteErrorf(w, http.StatusBadRequest, "this email is already in use")
+			return
+		}
+
+		api.WriteErrorf(w, http.StatusInternalServerError, "UpdateUser: %v", err)
+		return
+	}
+
+	api.WriteJSON(w, http.StatusOK, user)
+}
+
+
+func (s UserService) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	idS := r.PathValue("id")
+	if idS == "" {
+		panic("empty id path value")
+	}
+
+	id, err := getId(idS)
+	if err != nil {
+		api.WriteErrorf(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	err = s.db.DeleteUserById(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, types.ErrUserFKConstraint) {
+			api.WriteErrorf(w, http.StatusBadRequest, "cannot delete user because of existing media content associated with it")
+			return
+		}
+		api.WriteErrorf(w, http.StatusInternalServerError, "DeleteUser: %v", err)
+		return
+	}
+
+	api.WriteNoContent(w)
+}
+```
+
+### Обробники запитів для взаємодії з адаптером медіа-контенту
+
+internal/handlers/media_content.go
+
+```go
+type MediaContentStorage interface {
+	CreateMediaContent(ctx context.Context, title string, desc sql.NullString, body string, mcType types.MediaContentType, userId int32) (types.MediaContent, error)
+	ListMediaContent(ctx context.Context) ([]types.MediaContent, error)
+	GetMediaContentById(ctx context.Context, id int32) (types.MediaContent, error)
+	ListMediaContentByUserId(ctx context.Context, id int32) ([]types.MediaContent, error)
+	DeleteMediaContentById(ctx context.Context, id int32) error
+}
+
+type MediaContentService struct {
+	db MediaContentStorage
+}
+
+func NewMediaContentService(db MediaContentStorage) *MediaContentService {
+	return &MediaContentService{
+		db: db,
+	}
+}
+
+
+type CreateMediaContentRequest struct {
+	Title       string                 `json:"title"`
+	Description string                 `json:"description"`
+	Body        string                 `json:"body"`
+	Type        types.MediaContentType `json:"type"`
+	UserId      int32                  `json:"user_id"`
+}
+
+func (s MediaContentService) CreateMediaContent(w http.ResponseWriter, r *http.Request) {
+	var req CreateMediaContentRequest
+	if err := api.DecodeJSON(r, &req); err != nil {
+		if errors.Is(err, types.ErrWrongMediaContentTypeString) {
+			api.WriteErrorf(w, http.StatusBadRequest, "wrong media content type, available only: text | image | audio | video")
+			return
+		}
+		api.WriteErrorf(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if req.Title == "" {
+		api.WriteErrorf(w, http.StatusBadRequest, "empty title")
+		return
+	}
+	if req.Body == "" {
+		api.WriteErrorf(w, http.StatusBadRequest, "empty body")
+		return
+	}
+	if req.Type == "" {
+		api.WriteErrorf(w, http.StatusBadRequest, "empty type")
+		return
+	}
+	var desc sql.NullString
+	if req.Description != "" {
+		desc.String = req.Description
+		desc.Valid = true
+	}
+
+	mc, err := s.db.CreateMediaContent(r.Context(), req.Title, desc, req.Body, req.Type, req.UserId)
+	if err != nil {
+		if errors.Is(err, types.ErrTitleTooLong) {
+			api.WriteErrorf(w, http.StatusBadRequest, "title cannot be longer than %d characters", types.TitleMaxLen)
+			return
+		}
+		if errors.Is(err, types.ErrDescriptionTooLong) {
+			api.WriteErrorf(w, http.StatusBadRequest, "description cannot be longer than %d characters", types.DescriptionMaxLen)
+			return
+		}
+		if errors.Is(err, types.ErrUserIdNotExists) {
+			api.WriteErrorf(w, http.StatusBadRequest, "user with this id not exists")
+			return
+		}
+
+		api.WriteErrorf(w, http.StatusInternalServerError, "CreateMediaContent: %v", err)
+		return
+	}
+	api.WriteJSON(w, http.StatusCreated, mc)
+}
+
+
+type ListMediaContentResponse struct {
+	Users []types.MediaContent `json:"media_content"`
+}
+
+func (s MediaContentService) ListMediaContent(w http.ResponseWriter, r *http.Request) {
+	userIdS := r.URL.Query().Get("user_id")
+
+	var mc []types.MediaContent
+	var err error
+	if userIdS == "" {
+		mc, err = s.db.ListMediaContent(r.Context())
+		if err != nil {
+			api.WriteErrorf(w, http.StatusInternalServerError, "ListMediaContent: %v", err)
+			return
+		}
+	} else {
+		userId, err := getId(userIdS)
+		if err != nil {
+			api.WriteErrorf(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		mc, err = s.db.ListMediaContentByUserId(r.Context(), userId)
+		if err != nil {
+			api.WriteErrorf(w, http.StatusInternalServerError, "ListMediaContent: %v", err)
+			return
+		}
+	}
+
+	api.WriteJSON(w, http.StatusOK, ListMediaContentResponse{mc})
+}
+
+
+func (s MediaContentService) GetMediaContent(w http.ResponseWriter, r *http.Request) {
+	idS := r.PathValue("id")
+	if idS == "" {
+		panic("empty id path value")
+	}
+
+	id, err := getId(idS)
+	if err != nil {
+		api.WriteErrorf(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	mc, err := s.db.GetMediaContentById(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, types.ErrMediaContentIdNotExists) {
+			api.WriteErrorf(w, http.StatusNotFound, "media content with this id was not found")
+			return
+		}
+
+		api.WriteErrorf(w, http.StatusInternalServerError, "GetMediaContent: %v", err)
+		return
+	}
+
+	api.WriteJSON(w, http.StatusOK, mc)
+}
+
+
+func (s MediaContentService) DeleteMediaContent(w http.ResponseWriter, r *http.Request) {
+	idS := r.PathValue("id")
+	if idS == "" {
+		panic("empty id path value")
+	}
+
+	id, err := getId(idS)
+	if err != nil {
+		api.WriteErrorf(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	err = s.db.DeleteMediaContentById(r.Context(), id)
+	if err != nil {
+		api.WriteErrorf(w, http.StatusInternalServerError, "DeleteMediaContent: %v", err)
+		return
+	}
+
+	api.WriteNoContent(w)
+}
+```
+
+### Визначення API-ендпоїнтів
+
+main.go
+
+```go
+func main() {
+	// Load config
+	err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Connect to storage
+	conn, err := sql.Open("postgres", config.Cfg.DB.URL)
+	if err != nil {
+		log.Fatal("can't open sql", err)
+	}
+	defer conn.Close()
+
+	db := database.Create(conn)
+
+	// Set handlers
+	r := http.NewServeMux()
+
+	us := handlers.NewUserService(db)
+	r.HandleFunc("POST /users", us.CreateUser)
+	r.HandleFunc("GET /users", us.ListUsers)
+	r.HandleFunc("GET /users/{id}", us.GetUser)
+	r.HandleFunc("PUT /users/{id}", us.UpdateUser)
+	r.HandleFunc("DELETE /users/{id}", us.DeleteUser)
+
+	mcs := handlers.NewMediaContentService(db)
+	r.HandleFunc("POST /media_content", mcs.CreateMediaContent)
+	r.HandleFunc("GET /media_content", mcs.ListMediaContent)
+	r.HandleFunc("GET /media_content/{id}", mcs.GetMediaContent)
+	r.HandleFunc("DELETE /media_content/{id}", mcs.DeleteMediaContent)
+
+	r.HandleFunc("GET /api/", swagger.Handler(
+		swagger.URL(fmt.Sprintf("http://localhost:%s/api/doc.json", config.Cfg.Server.Port)),
+	))
+
+	// Run server
+	server := httpserver.New(
+		r,
+		httpserver.Port(config.Cfg.Server.Port),
+		httpserver.ReadTimeout(4),
+		httpserver.IdleTimeout(60),
+		httpserver.ErrorLog(log.Default()),
+	)
+
+	log.Println("starting server at address:", server.Addr())
+	go server.Run()
+
+	// Waiting signals
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+
+	select {
+	case s := <-interrupt:
+		log.Println("signal interrupt:", s.String())
+	case err := <-server.Notify():
+		log.Println("server notify:", err)
+	}
+
+	// Shutdown server
+	err = server.Shutdown()
+	if err != nil {
+		log.Println("can't shutdown server:", err)
+	}
+}
+```
+
+## Документація Swagger
+
+Документація доступна за шляхом <BASE_URL>/api
+
+<p align="center">
+    <img src="./media/swagger.png">
+</p>
+
+### USERS
+
+### POST /users
+
+<p align="center">
+    <img src="./media/users-post.png">
+</p>
+
+### GET /users
+
+<p align="center">
+    <img src="./media/users-get.png">
+</p>
+
+### GET /users/{id}
+
+<p align="center">
+    <img src="./media/users-get-id.png">
+</p>
+
+### PUT /users/{id}
+
+<p align="center">
+    <img src="./media/users-put.png">
+</p>
+
+### DELETE /users/{id}
+
+<p align="center">
+    <img src="./media/users-delete.png">
+</p>
+
+### MEDIA_CONTENT
+
+### POST /media_content
+
+<p align="center">
+    <img src="./media/media_content-post.png">
+</p>
+
+### GET /media_content
+
+<p align="center">
+    <img src="./media/madia_content-get.png">
+</p>
+
+### GET /media_content/{id}
+
+<p align="center">
+    <img src="./media/media_content-get-id.png">
+</p>
+
+### DELETE /media_content/{id}
+
+<p align="center">
+    <img src="./media/media_content-delete.png">
+</p>
