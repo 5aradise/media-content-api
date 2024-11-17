@@ -1414,7 +1414,7 @@ func main() {
     <img src="./media/swagger.png">
 </p>
 
-### USERS
+### ---USERS---
 
 ### POST /users
 
@@ -1446,7 +1446,7 @@ func main() {
     <img src="./media/users-delete.png">
 </p>
 
-### MEDIA_CONTENT
+### ---MEDIA_CONTENT---
 
 ### POST /media_content
 
@@ -1457,7 +1457,7 @@ func main() {
 ### GET /media_content
 
 <p align="center">
-    <img src="./media/madia_content-get.png">
+    <img src="./media/media_content-get.png">
 </p>
 
 ### GET /media_content/{id}
